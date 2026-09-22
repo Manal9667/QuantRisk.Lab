@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.python-version
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Trained model artifacts. The deployed PD model + its metrics are committed so
+# `streamlit run dashboard/app.py` works out of the box; both are regenerable
+# via `python -m src.pd_model`. Any other model files are ignored.
+models/*
+!models/pd_model.joblib
+!models/model_metrics.json
+
+# Processed data (regenerated from raw)
+data/processed/*.csv
+data/processed/*.parquet
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Keep the raw dataset tracked so the project runs out-of-the-box,
+# but ignore any large re-downloads.
+!data/raw/credit_risk_dataset.csv
