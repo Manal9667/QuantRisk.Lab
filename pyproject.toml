@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantumrisklab"
+version = "0.1.0"
+description = "Quantum-enhanced portfolio optimization and risk analysis platform for financial use cases."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "QuantumRiskLab" }]
+keywords = ["quantum", "portfolio-optimization", "qubo", "qiskit", "finance", "risk"]
+
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+    "SQLAlchemy>=2.0",
+    "psycopg[binary]>=3.1",
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+quantum = [
+    "qiskit>=1.0",
+    "qiskit-optimization>=0.6",
+    "qiskit-algorithms>=0.3",
+    "qiskit-aer>=0.14",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "httpx>=0.27",
+    "mypy>=1.8",
+    "ruff>=0.3",
+]
+
+[project.scripts]
+quantumrisklab-experiments = "quantumrisklab.experiments.runner:main"
+quantumrisklab-initdb = "quantumrisklab.db.init_db:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Note: sql/ and migrations/ live at the repo root (not inside the package) and
+# are located at runtime via repo-root path resolution. In Docker they are
+# COPYed alongside the package and the project is installed editable (-e), so the
+# paths resolve. They are therefore intentionally not packaged as package-data.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: integration tests that require a database or full pipeline",
+    "quantum: tests that require the optional Qiskit stack",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+ignore_missing_imports = true

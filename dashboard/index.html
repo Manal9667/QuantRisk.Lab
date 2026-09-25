@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuantumRiskLab — Portfolio Optimization Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface-2: #fafafa;
+    --border: rgba(24, 24, 27, 0.08);
+    --border-strong: rgba(24, 24, 27, 0.14);
+    --ink: #18181b;
+    --ink-soft: #3f3f46;
+    --muted: #71717a;
+    --faint: #a1a1aa;
+    --classical: #3b5bdb;
+    --classical-soft: rgba(59, 91, 219, 0.10);
+    --quantum: #e08a1e;
+    --quantum-soft: rgba(224, 138, 30, 0.12);
+    --accent: #6d28d9;
+    --good: #15803d;
+    --bad: #b91c1c;
+    --shadow-sm: 0 1px 2px rgba(24,24,27,0.04), 0 1px 3px rgba(24,24,27,0.03);
+    --shadow-md: 0 4px 16px rgba(24,24,27,0.06), 0 1px 3px rgba(24,24,27,0.04);
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Inter", -apple-system, Segoe UI, Roboto, sans-serif;
+    font-size: 14px; line-height: 1.55;
+  }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  a { color: inherit; }
+
+  /* ---------- header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: saturate(180%) blur(12px);
+    background: rgba(245,245,243,0.78);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 1180px; margin: 0 auto; padding: 14px 28px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.02em; font-size: 15px; }
+  .mark { width: 9px; height: 18px; border-radius: 2px; background: var(--ink); }
+  .brand small { color: var(--faint); font-weight: 500; }
+  .header-spacer { flex: 1; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-soft);
+    background: var(--surface); border: 1px solid var(--border); padding: 6px 11px; border-radius: 999px;
+    font-weight: 500;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .dot.live { background: var(--good); box-shadow: 0 0 0 3px rgba(21,128,61,0.15); }
+  .dot.off { background: var(--bad); box-shadow: 0 0 0 3px rgba(185,28,28,0.15); }
+  .ghost-link { font-size: 12.5px; color: var(--muted); text-decoration: none; font-weight: 500; padding: 6px 10px; border-radius: 8px; }
+  .ghost-link:hover { color: var(--ink); background: var(--surface); }
+
+  /* ---------- layout ---------- */
+  main { max-width: 1180px; margin: 0 auto; padding: 40px 28px 72px; }
+  .hero { margin-bottom: 36px; max-width: 760px; }
+  .hero h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.025em; margin: 0 0 12px; font-weight: 700; }
+  .hero p { color: var(--muted); font-size: 15px; margin: 0 0 18px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font-size: 11.5px; font-weight: 500; color: var(--ink-soft); background: var(--surface);
+    border: 1px solid var(--border); padding: 4px 10px; border-radius: 7px; }
+
+  .section-label { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--faint); margin: 40px 0 14px; }
+  .section-label:first-of-type { margin-top: 8px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 22px;
+  }
+  .card h2 { font-size: 14px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .card .hint { font-size: 12.5px; color: var(--muted); margin: 0 0 18px; }
+
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 900px) { .grid-2, .grid-4 { grid-template-columns: 1fr; } }
+
+  /* ---------- controls ---------- */
+  .controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 18px; }
+  @media (max-width: 720px) { .controls { grid-template-columns: repeat(2, 1fr); } }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+  .field input, .field select {
+    font-family: inherit; font-size: 13.5px; color: var(--ink); background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; transition: all .15s ease;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: var(--accent); background: #fff;
+    box-shadow: 0 0 0 3px rgba(109,40,217,0.12);
+  }
+  .run-row { display: flex; align-items: center; gap: 14px; margin-top: 20px; flex-wrap: wrap; }
+  button.primary {
+    font-family: inherit; font-size: 13.5px; font-weight: 600; color: #fff; cursor: pointer;
+    background: var(--ink); border: none; border-radius: 10px; padding: 11px 20px;
+    display: inline-flex; align-items: center; gap: 9px; transition: transform .12s ease, box-shadow .12s ease, opacity .2s;
+    box-shadow: 0 2px 8px rgba(24,24,27,0.18);
+  }
+  button.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(24,24,27,0.22); }
+  button.primary:active { transform: translateY(0); }
+  button.primary:disabled { opacity: .55; cursor: progress; transform: none; }
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
+    border-radius: 50%; animation: spin .7s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .run-note { font-size: 12.5px; color: var(--muted); }
+  .run-note code { font-family: "JetBrains Mono", monospace; background: var(--surface-2);
+    border: 1px solid var(--border); padding: 1px 6px; border-radius: 6px; font-size: 11.5px; }
+
+  /* ---------- stat cards ---------- */
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 18px 16px;
+    box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+  }
+  .stat .k { font-size: 11.5px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+  .stat .cmp { display: flex; align-items: baseline; gap: 6px; margin-top: 12px; }
+  .stat .val { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  .stat .val.cl { color: var(--classical); }
+  .stat .sub { margin-top: 8px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .stat .q { color: var(--quantum); font-weight: 600; }
+  .winner { position: absolute; top: 14px; right: 14px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; padding: 3px 7px; border-radius: 6px; }
+  .winner.cl { background: var(--classical-soft); color: var(--classical); }
+  .winner.q { background: var(--quantum-soft); color: var(--quantum); }
+
+  /* ---------- table ---------- */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: right; padding: 9px 10px; font-size: 12.5px; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { color: var(--faint); font-weight: 600; font-size: 11px; letter-spacing: 0.04em;
+    text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  tbody td { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td.metric { color: var(--ink-soft); font-weight: 500; }
+  .swatch { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 1px; }
+  .sw-cl { background: var(--classical); } .sw-q { background: var(--quantum); }
+
+  .legend { display: flex; gap: 18px; font-size: 12px; color: var(--muted); margin-top: 14px; align-items: center; }
+  .legend b { font-weight: 600; color: var(--ink-soft); }
+  canvas { max-width: 100%; }
+  .heatwrap { display: flex; justify-content: center; padding-top: 4px; }
+
+  /* ---------- misc ---------- */
+  .fade { opacity: 0; transform: translateY(8px); animation: rise .5s ease forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .empty { color: var(--faint); font-size: 12.5px; text-align: center; padding: 28px 0; }
+  .callout { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; font-size: 12.5px; color: var(--ink-soft); }
+  .callout b { color: var(--ink); }
+  footer { max-width: 1180px; margin: 0 auto; padding: 24px 28px 48px; color: var(--faint); font-size: 12px;
+    border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="brand"><span class="mark"></span>QuantumRiskLab</div>
+    <div class="header-spacer"></div>
+    <span class="pill"><span class="dot" id="statusDot"></span><span id="statusText">connecting…</span></span>
+    <a class="ghost-link" href="/docs" target="_blank" rel="noopener">API docs ↗</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero fade">
+    <h1>Classical vs. quantum portfolio optimization,<br/>measured honestly.</h1>
+    <p>Construct a constrained portfolio over synthetic market data and compare a classical mean-variance
+       optimizer against a QUBO-based quantum(-inspired) solver — side by side, on return, risk, and runtime.</p>
+    <div class="chips">
+      <span class="chip">Python</span><span class="chip">Qiskit · QUBO · QAOA</span>
+      <span class="chip">SciPy</span><span class="chip">PostgreSQL</span><span class="chip">FastAPI</span>
+    </div>
+  </section>
+
+  <div class="section-label">Construct a portfolio</div>
+  <div class="card fade">
+    <div class="controls">
+      <div class="field"><label>Universe size (N)</label><input id="universe" type="number" value="12" min="2" max="100"/></div>
+      <div class="field"><label>Max holdings (K)</label><input id="maxHoldings" type="number" value="5" min="1"/></div>
+      <div class="field"><label>Min weight</label><input id="minWeight" type="number" value="0.05" step="0.01"/></div>
+      <div class="field"><label>Max weight</label><input id="maxWeight" type="number" value="0.35" step="0.01"/></div>
+      <div class="field"><label>Risk aversion λ</label><input id="riskAversion" type="number" value="5" step="0.5"/></div>
+      <div class="field"><label>Max sector exposure</label><input id="maxSector" type="number" value="0.5" step="0.05"/></div>
+      <div class="field"><label>Transaction cost</label><input id="txCost" type="number" value="0.001" step="0.001"/></div>
+      <div class="field"><label>Quantum backend</label>
+        <select id="backend">
+          <option value="exact">exact — QUBO (brute force / annealing)</option>
+          <option value="qaoa">qaoa — gate model (simulator, ≤12)</option>
+          <option value="numpy_min_eigen">numpy_min_eigen — exact eigensolver</option>
+        </select>
+      </div>
+    </div>
+    <div class="run-row">
+      <button class="primary" id="runBtn"><span class="spinner" id="spin"></span><span id="runLabel">Run optimization</span></button>
+      <span class="run-note" id="runMsg">Runs a classical and a quantum solve on the same instance.</span>
+    </div>
+  </div>
+
+  <div class="section-label">Head-to-head</div>
+  <div class="grid grid-4" id="statCards">
+    <div class="stat"><div class="k">Sharpe ratio</div><div class="cmp"><span class="val cl mono" id="s_sharpe_cl">—</span></div><div class="sub">quantum <span class="q mono" id="s_sharpe_q">—</span></div></div>
+    <div class="stat"><div class="k">Expected return</div><div class="cmp"><span class="val cl mono" id="s_ret_cl">—</span></div><div class="sub">quantum <span class="q mono" id="s_ret_q">—</span></div></div>
+    <div class="stat"><div class="k">Volatility</div><div class="cmp"><span class="val cl mono" id="s_vol_cl">—</span></div><div class="sub">quantum <span class="q mono" id="s_vol_q">—</span></div></div>
+    <div class="stat"><div class="k">Solve time</div><div class="cmp"><span class="val cl mono" id="s_rt_cl">—</span></div><div class="sub">quantum <span class="q mono" id="s_rt_q">—</span></div></div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:16px;">
+    <div class="card">
+      <h2>Allocation</h2>
+      <p class="hint">Weight per selected asset — classical vs. quantum selection.</p>
+      <canvas id="allocChart" height="230"></canvas>
+      <div class="legend"><span><span class="swatch sw-cl"></span>Classical</span><span><span class="swatch sw-q"></span>Quantum</span></div>
+    </div>
+    <div class="card">
+      <h2>Risk &amp; return</h2>
+      <p class="hint">Full metric snapshot for the current portfolios.</p>
+      <table id="metricsTable"><thead><tr><th>Metric</th><th><span class="swatch sw-cl"></span>Classical</th><th><span class="swatch sw-q"></span>Quantum</th></tr></thead><tbody><tr><td colspan="3" class="empty">Run an optimization to populate.</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:16px;">
+    <div class="card">
+      <h2>Correlation structure</h2>
+      <p class="hint">Daily-return correlation across the universe.</p>
+      <div class="heatwrap"><canvas id="heatmap" height="300"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Runtime &amp; objective</h2>
+      <p class="hint">Solve time and utility U(w) for the current run.</p>
+      <canvas id="runtimeChart" height="230"></canvas>
+    </div>
+  </div>
+
+  <div class="section-label">Experiment sweep — scaling by problem size</div>
+  <div class="card fade">
+    <div class="grid grid-2">
+      <div><canvas id="expObjectiveChart" height="230"></canvas></div>
+      <div><canvas id="expRuntimeChart" height="230"></canvas></div>
+    </div>
+    <table id="expTable" style="margin-top:20px;">
+      <thead><tr><th>N</th><th>Classical U</th><th>Quantum U</th><th>Cl. vol</th><th>Q. vol</th>
+        <th>Cl. time</th><th>Q. time</th><th>Q. violation</th></tr></thead>
+      <tbody><tr><td colspan="8" class="empty">No experiments yet — run <code>scripts/run_experiments.py</code>.</td></tr></tbody>
+    </table>
+    <div class="callout" style="margin-top:18px;" id="verdict">
+      <b>Reading the results:</b> across sizes the classical optimizer generally wins on return, Sharpe and runtime.
+      The QUBO is typically solved to optimality (quality &#8776; 1.0), so the gap reflects the coarser binary
+      <em>formulation</em> rather than solver quality.
+    </div>
+  </div>
+
+  <div class="section-label">Most frequently selected assets</div>
+  <div class="card fade">
+    <table id="selectedTable"><thead><tr><th>Ticker</th><th>Sector</th><th>Times selected</th><th>Selection freq.</th><th>Avg weight</th></tr></thead>
+      <tbody><tr><td colspan="5" class="empty">Selections appear here as runs accumulate.</td></tr></tbody></table>
+  </div>
+</main>
+
+<footer>
+  QuantumRiskLab — a research harness for quantum vs. classical portfolio optimization.
+  No quantum advantage is claimed; results are reproducible from a fixed seed.
+</footer>
+
+<script>
+const API = (location.protocol === "file:" || location.port === "5500") ? "http://localhost:8000" : "";
+const $ = (id) => document.getElementById(id);
+const CL = "#3b5bdb", Q = "#e08a1e", GRID = "rgba(24,24,27,0.06)", MUTED = "#71717a";
+let allocChart, runtimeChart, expObjChart, expRtChart;
+
+Chart.defaults.font.family = "Inter, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = MUTED;
+Chart.defaults.plugins.legend.display = false;
+Chart.defaults.animation.duration = 500;
+
+async function api(path, opts) {
+  const res = await fetch(API + path, opts);
+  if (!res.ok) { let d; try { d = (await res.json()).detail; } catch { d = res.statusText; } throw new Error(d); }
+  return res.json();
+}
+
+const pct = (v, d=2) => (v == null ? "—" : (v * 100).toFixed(d) + "%");
+const num = (v, d=3) => (v == null ? "—" : (+v).toFixed(d));
+const time = (s) => (s == null ? "—" : s < 1 ? (s * 1000).toFixed(0) + " ms" : s.toFixed(2) + " s");
+
+async function checkStatus() {
+  try {
+    const r = await api("/");
+    $("statusDot").className = "dot live";
+    $("statusText").textContent = "API online · Qiskit " + (r.qiskit_available ? "ready" : "off");
+    return true;
+  } catch {
+    $("statusDot").className = "dot off";
+    $("statusText").textContent = "API offline — start on :8000";
+    return false;
+  }
+}
+
+function constraints() {
+  return {
+    name: "dashboard",
+    max_holdings: +$("maxHoldings").value,
+    min_weight: +$("minWeight").value,
+    max_weight: +$("maxWeight").value,
+    risk_aversion: +$("riskAversion").value,
+    max_sector_exposure: +$("maxSector").value,
+    transaction_cost: +$("txCost").value,
+  };
+}
+
+let _timer = null, _t0 = 0;
+function setLoading(on) {
+  $("runBtn").disabled = on;
+  $("spin").style.display = on ? "inline-block" : "none";
+  if (on) {
+    _t0 = Date.now();
+    $("runLabel").textContent = "Optimizing… 0s";
+    _timer = setInterval(() => {
+      $("runLabel").textContent = "Optimizing… " + Math.round((Date.now() - _t0) / 1000) + "s";
+    }, 500);
+  } else {
+    clearInterval(_timer); _timer = null;
+    $("runLabel").textContent = "Run optimization";
+  }
+}
+
+// Warn up front when a slow configuration is selected.
+function slowWarning() {
+  const backend = $("backend").value, size = +$("universe").value;
+  if (backend === "qaoa") return `QAOA runs on a statevector simulator — expect ~30s at N=6 and 1–2 min near N=12.`;
+  if (backend === "numpy_min_eigen" && size > 18) return `numpy_min_eigen is exponential; N=${size} may take minutes. Consider N ≤ 18 or the 'exact' backend.`;
+  if (backend === "exact" && size >= 50) return `Large N with simulated annealing may take ~10–25s.`;
+  return "";
+}
+function updateHint() {
+  const w = slowWarning();
+  $("runMsg").innerHTML = w ? w : "Runs a classical and a quantum solve on the same instance.";
+}
+$("backend").onchange = updateHint;
+$("universe").oninput = updateHint;
+
+async function runOptimization() {
+  // Guard: QAOA above the simulator qubit cap would 422 after a wait.
+  if ($("backend").value === "qaoa" && +$("universe").value > 12) {
+    $("runMsg").textContent = "QAOA is capped at N=12 on the simulator. Lower the universe size or use the 'exact' backend.";
+    return;
+  }
+  setLoading(true);
+  const warn = slowWarning();
+  $("runMsg").innerHTML = warn ? `Solving… ${warn}` : "Solving classical + quantum…";
+  try {
+    const size = +$("universe").value, K = +$("maxHoldings").value, c = constraints();
+    const classical = await api("/optimize/classical", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ universe_size: size, constraints: c }) });
+    const quantum = await api("/optimize/quantum", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ universe_size: size, backend: $("backend").value, target_cardinality: K, constraints: c }) });
+    renderStats(classical, quantum);
+    renderAllocation(classical, quantum);
+    renderMetrics(classical, quantum);
+    renderRuntime(classical, quantum);
+    await renderCorrelation(size);
+    $("runMsg").innerHTML = `Solved. classical <code>#${classical.run_id}</code> · quantum <code>#${quantum.run_id}</code> (${quantum.quantum_detail.backend})`;
+    loadSelected(); loadExperiments();
+  } catch (e) { $("runMsg").textContent = "Error: " + e.message; }
+  finally { setLoading(false); }
+}
+
+function setStat(id, cl, q, better, fmt) {
+  $(`s_${id}_cl`).textContent = fmt(cl);
+  $(`s_${id}_q`).textContent = fmt(q);
+  const card = $(`s_${id}_cl`).closest(".stat");
+  card.querySelector(".winner")?.remove();
+  if (cl == null || q == null) return;
+  const clWins = better === "high" ? cl >= q : cl <= q;
+  const w = document.createElement("span");
+  w.className = "winner " + (clWins ? "cl" : "q");
+  w.textContent = clWins ? "Classical" : "Quantum";
+  card.appendChild(w);
+}
+
+function renderStats(cl, qt) {
+  const a = cl.metrics, b = qt.metrics;
+  setStat("sharpe", a.sharpe_ratio, b.sharpe_ratio, "high", (v) => num(v, 3));
+  setStat("ret", a.expected_return, b.expected_return, "high", (v) => pct(v));
+  setStat("vol", a.volatility, b.volatility, "low", (v) => pct(v));
+  setStat("rt", cl.runtime_seconds, qt.runtime_seconds, "low", time);
+}
+
+function renderAllocation(cl, qt) {
+  const tickers = [...new Set([...cl.weights, ...qt.weights].map((w) => w.ticker))].sort();
+  const clMap = Object.fromEntries(cl.weights.map((w) => [w.ticker, w.weight]));
+  const qtMap = Object.fromEntries(qt.weights.map((w) => [w.ticker, w.weight]));
+  if (allocChart) allocChart.destroy();
+  allocChart = new Chart($("allocChart"), {
+    type: "bar",
+    data: { labels: tickers, datasets: [
+      { label: "Classical", data: tickers.map((t) => (clMap[t] || 0) * 100), backgroundColor: CL, borderRadius: 5, maxBarThickness: 26 },
+      { label: "Quantum", data: tickers.map((t) => (qtMap[t] || 0) * 100), backgroundColor: Q, borderRadius: 5, maxBarThickness: 26 },
+    ] },
+    options: { scales: {
+      y: { title: { display: true, text: "weight %", color: MUTED }, grid: { color: GRID }, border: { display: false } },
+      x: { grid: { display: false }, border: { display: false } } } },
+  });
+}
+
+function metricRows(m) {
+  return {
+    "Expected return": pct(m.expected_return), "Volatility": pct(m.volatility),
+    "Sharpe ratio": num(m.sharpe_ratio, 3), "Max drawdown": pct(m.max_drawdown),
+    "Beta": num(m.beta, 3), "VaR 95% (1d)": pct(m.var_95), "CVaR 95% (1d)": pct(m.cvar_95),
+    "Diversification": num(m.diversification_ratio, 3), "Effective N": num(m.effective_n, 2),
+    "Max sector exp.": pct(m.max_sector_exposure, 1), "Turnover": num(m.turnover, 3),
+    "Constraint violation": num(m.constraint_violation, 4),
+  };
+}
+function renderMetrics(cl, qt) {
+  const a = metricRows(cl.metrics), b = metricRows(qt.metrics);
+  const body = $("metricsTable").querySelector("tbody"); body.innerHTML = "";
+  for (const k of Object.keys(a))
+    body.innerHTML += `<tr><td class="metric">${k}</td><td class="mono">${a[k]}</td><td class="mono">${b[k]}</td></tr>`;
+  body.innerHTML += `<tr><td class="metric">Objective U(w)</td><td class="mono">${num(cl.objective_value, 4)}</td><td class="mono">${num(qt.objective_value, 4)}</td></tr>`;
+  body.innerHTML += `<tr><td class="metric">QUBO energy</td><td class="mono">—</td><td class="mono">${num(qt.quantum_detail.objective_qubo, 3)}</td></tr>`;
+  body.innerHTML += `<tr><td class="metric">Solution quality</td><td class="mono">—</td><td class="mono">${qt.quantum_detail.solution_quality != null ? num(qt.quantum_detail.solution_quality, 3) : "—"}</td></tr>`;
+}
+
+function renderRuntime(cl, qt) {
+  if (runtimeChart) runtimeChart.destroy();
+  runtimeChart = new Chart($("runtimeChart"), {
+    type: "bar",
+    data: { labels: ["Solve time (ms)", "Utility U(w) ×100"], datasets: [
+      { label: "Classical", data: [cl.runtime_seconds * 1000, cl.objective_value * 100], backgroundColor: CL, borderRadius: 6, maxBarThickness: 60 },
+      { label: "Quantum", data: [qt.runtime_seconds * 1000, qt.objective_value * 100], backgroundColor: Q, borderRadius: 6, maxBarThickness: 60 },
+    ] },
+    options: { scales: { y: { grid: { color: GRID }, border: { display: false } }, x: { grid: { display: false }, border: { display: false } } },
+      plugins: { legend: { display: true, position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "circle", padding: 16 } } } },
+  });
+}
+
+async function renderCorrelation(size) {
+  const { tickers, matrix } = await api(`/analytics/correlation?universe_size=${Math.min(size, 20)}`);
+  const n = tickers.length; if (!n) return;
+  const canvas = $("heatmap"), ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const pad = 34, cell = Math.min(Math.floor((360 - pad) / n), 24);
+  const dim = pad + cell * n;
+  canvas.style.width = dim + "px"; canvas.style.height = dim + "px";
+  canvas.width = dim * dpr; canvas.height = dim * dpr; ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, dim, dim);
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    const v = matrix[i][j], a = Math.min(Math.abs(v), 1);
+    // diverging: warm (quantum orange) for +, cool (classical blue) for -
+    ctx.fillStyle = v >= 0 ? `rgba(224,138,30,${a * 0.85 + 0.06})` : `rgba(59,91,219,${a * 0.85 + 0.06})`;
+    roundRect(ctx, pad + j * cell + 1, pad + i * cell + 1, cell - 2, cell - 2, 3); ctx.fill();
+  }
+  ctx.fillStyle = MUTED; ctx.font = "8px 'JetBrains Mono', monospace"; ctx.textBaseline = "middle";
+  tickers.forEach((t, i) => { ctx.textAlign = "right"; ctx.fillText(t.slice(-3), pad - 4, pad + i * cell + cell / 2); });
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+async function loadExperiments() {
+  let rows = [];
+  try { rows = (await api("/experiments/compare")).classical_vs_quantum || []; } catch { return; }
+  const body = $("expTable").querySelector("tbody");
+  if (!rows.length) return;
+  body.innerHTML = "";
+  const labels = [], clObj = [], qtObj = [], clRt = [], qtRt = [];
+  for (const r of rows) {
+    body.innerHTML += `<tr><td class="mono">${r.universe_size}</td>
+      <td class="mono">${num(r.classical_objective)}</td><td class="mono">${num(r.quantum_objective)}</td>
+      <td class="mono">${pct(r.classical_volatility)}</td><td class="mono">${pct(r.quantum_volatility)}</td>
+      <td class="mono">${time(r.classical_runtime_s)}</td><td class="mono">${time(r.quantum_runtime_s)}</td>
+      <td class="mono">${num(r.quantum_violation, 4)}</td></tr>`;
+    labels.push(r.universe_size);
+    clObj.push(r.classical_objective); qtObj.push(r.quantum_objective);
+    clRt.push(r.classical_runtime_s); qtRt.push(r.quantum_runtime_s);
+  }
+  drawLine("expObjectiveChart", (c) => (expObjChart = c), expObjChart, labels, clObj, qtObj, "Utility U(w) by universe size", false);
+  drawLine("expRuntimeChart", (c) => (expRtChart = c), expRtChart, labels, clRt, qtRt, "Solve time (s) by universe size", true);
+}
+
+function drawLine(id, save, existing, labels, cl, qt, title, log) {
+  if (existing) existing.destroy();
+  save(new Chart($(id), {
+    type: "line",
+    data: { labels, datasets: [
+      { label: "Classical", data: cl, borderColor: CL, backgroundColor: CL, tension: 0.35, borderWidth: 2, pointRadius: 3, pointBackgroundColor: CL },
+      { label: "Quantum", data: qt, borderColor: Q, backgroundColor: Q, tension: 0.35, borderWidth: 2, pointRadius: 3, pointBackgroundColor: Q },
+    ] },
+    options: {
+      plugins: { title: { display: true, text: title, color: "#3f3f46", font: { size: 12, weight: "600" }, padding: { bottom: 12 } },
+        legend: { display: true, position: "bottom", labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: "circle", padding: 16 } } },
+      scales: { y: { type: log ? "logarithmic" : "linear", grid: { color: GRID }, border: { display: false } },
+        x: { title: { display: true, text: "assets", color: MUTED }, grid: { display: false }, border: { display: false } } },
+    },
+  }));
+}
+
+async function loadSelected() {
+  let rows = [];
+  try { rows = await api("/analytics/most-selected?limit=12"); } catch { return; }
+  if (!rows.length) return;
+  const body = $("selectedTable").querySelector("tbody"); body.innerHTML = "";
+  for (const r of rows)
+    body.innerHTML += `<tr><td class="mono">${r.ticker}</td><td>${r.sector}</td>
+      <td class="mono">${r.times_selected}</td><td class="mono">${num(r.selection_frequency, 3)}</td>
+      <td class="mono">${pct(r.avg_weight_when_selected)}</td></tr>`;
+}
+
+$("runBtn").onclick = runOptimization;
+
+(async function init() {
+  const online = await checkStatus();
+  await Promise.all([loadExperiments(), loadSelected()]);
+  if (online) runOptimization();  // populate the head-to-head on first load
+})();
+</script>
+</body>
+</html>

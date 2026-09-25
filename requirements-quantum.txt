@@ -1,0 +1,9 @@
+# Optional quantum stack.
+# Verified working on CPython 3.10-3.14 via Qiskit's abi3 wheels.
+# The QAOA path uses the reference StatevectorSampler primitive, so qiskit-aer
+# is NOT required. Install qiskit-aer only if you want a higher-performance
+# simulator (wheels may lag new Python releases).
+qiskit>=1.0
+qiskit-optimization>=0.6
+qiskit-algorithms>=0.3
+# qiskit-aer>=0.14  # optional, not required for the StatevectorSampler backend

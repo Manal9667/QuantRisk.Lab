@@ -1,0 +1,11 @@
+# Keep shell scripts LF so they run inside Linux containers regardless of the
+# checkout platform.
+*.sh text eol=lf
+docker/entrypoint.sh text eol=lf
+
+# Normalise common text files.
+*.py text
+*.sql text
+*.md text
+*.yml text
+*.toml text

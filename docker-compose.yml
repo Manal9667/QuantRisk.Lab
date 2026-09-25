@@ -1,0 +1,44 @@
+# QuantumRiskLab: API + PostgreSQL.
+#   docker compose up --build
+# API:        http://localhost:8000
+# Dashboard:  http://localhost:8000/dashboard
+# API docs:   http://localhost:8000/docs
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${QRL_DB_USER:-qrl}
+      POSTGRES_PASSWORD: ${QRL_DB_PASSWORD:-qrl_password}
+      POSTGRES_DB: ${QRL_DB_NAME:-quantumrisklab}
+    ports:
+      - "5432:5432"
+    volumes:
+      - qrl_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${QRL_DB_USER:-qrl} -d ${QRL_DB_NAME:-quantumrisklab}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      QRL_DB_HOST: postgres
+      QRL_DB_PORT: 5432
+      QRL_DB_USER: ${QRL_DB_USER:-qrl}
+      QRL_DB_PASSWORD: ${QRL_DB_PASSWORD:-qrl_password}
+      QRL_DB_NAME: ${QRL_DB_NAME:-quantumrisklab}
+      QRL_RANDOM_SEED: ${QRL_RANDOM_SEED:-42}
+      QRL_N_ASSETS: ${QRL_N_ASSETS:-60}
+      QRL_N_TRADING_DAYS: ${QRL_N_TRADING_DAYS:-756}
+      QRL_RISK_AVERSION: ${QRL_RISK_AVERSION:-5.0}
+      QRL_TRANSACTION_COST: ${QRL_TRANSACTION_COST:-0.001}
+      QRL_LOG_LEVEL: ${QRL_LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+
+volumes:
+  qrl_pgdata:

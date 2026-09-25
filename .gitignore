@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+
+# Local databases / artifacts
+*.db
+*.sqlite
+*.sqlite3
+install_core.log
+results/*.csv
+results/*.json
+!results/.gitkeep
+install_rest.log
+install_quantum.log
+docker_build.log
+
+# Node / dashboard
+node_modules/
+dashboard/dist/
+dashboard/.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/

@@ -1,0 +1,2 @@
+# Experiment result artifacts (CSV/JSON) are written here at runtime.
+# The directory is version-controlled but its generated contents are gitignored.
