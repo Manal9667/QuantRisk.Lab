@@ -1,8 +1,8 @@
-# QuantumRiskLab
+# QuantumRisk.Lab
 
 **A quantum-enhanced portfolio optimization and risk-analysis platform for financial use cases.**
 
-QuantumRiskLab takes historical market data for a universe of 30–100 liquid
+QuantumRisk.Lab takes historical market data for a universe of 30–100 liquid
 equities/ETFs and runs a full workflow: data ingestion and cleaning, financial
 feature calculation, portfolio risk measurement, classical portfolio
 optimization, a QUBO-based quantum(-inspired) optimizer, and a **side-by-side,
